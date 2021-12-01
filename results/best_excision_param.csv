@@ -1,0 +1,2 @@
+mindur,maxdur,threshold,ssmooth,hold.time,value,fevals,gevals,niter,convcode,kkt1,kkt2,xtime
+-6.907755278982137,-0.5108256237659907,0.6931471805599453,0,-1.6141812177575632,-21052,8,NA,NA,1,FALSE,FALSE,619.2840000000001
