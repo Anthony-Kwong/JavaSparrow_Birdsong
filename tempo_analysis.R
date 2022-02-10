@@ -1,3 +1,9 @@
+#This is the script we used to for the tempo project. Here we are investigating the extent which 
+#various temporal features may be socially/genetically inherited. We check for social inheritance 
+#using the coefficients and p-values of the social father's phenotype in random effects models. 
+#We compare the model with the pedigree vs the model without the pedigree to test for the
+#genetic effect. (chi square test)
+
 #load packages
 
 library(birdsong.tools)
@@ -95,6 +101,34 @@ rownames(null.kin)=rownames(kin.trim)
 
 #clutch is nest they grew up in
 
+#Consistency increases with times produced for all three predictors. We will estimate ages for the six birds with missing ages. This will allow us to estimate their residual consistency (after controlling for note features and age) to use as a response variable, and then to estimate the observed consistency and residual consistency for social fathers when they are raising sons through recursive fitting. 
+
+#Birth dates correlate closely with bird numbers, so I will assign birth dates to match the bird with the most similar number.
+meta.data=recover.meta.data
+meta.data$Birth.Date=as.character(meta.data$Birth.Date)
+meta.data$Birth.Date[which(meta.data$Bird.ID=="JS0002")]="15/09/2007"
+meta.data$Birth.Date[which(meta.data$Bird.ID=="JS0005")]="15/09/2007"  #bird not in pedigree or social father
+meta.data$Birth.Date[which(meta.data$Bird.ID=="JS0036")]="01/07/2009"
+meta.data$Birth.Date[which(meta.data$Bird.ID=="JS0064")]="12/12/2010"  #was father on 20/08/2011
+meta.data$Birth.Date[which(meta.data$Bird.ID=="JS0119")]="25/12/2010"
+meta.data$Birth.Date[which(meta.data$Bird.ID=="JS0155")]="06/10/2010"
+for (i in 1:length(meta.data$Birth.Date)){
+  if (substr(meta.data$Birth.Date[i],1,2)=="x/"){
+    meta.data$Birth.Date[i]=paste("15",substr(meta.data$Birth.Date[i],2,nchar(meta.data$Birth.Date[i])),sep="")
+  }
+  if (substr(meta.data$Birth.Date[i],3,5)=="/x/"){
+    meta.data$Birth.Date[i]=paste("01/07",substr(meta.data$Birth.Date[i],5,nchar(meta.data$Birth.Date[i])),sep="")
+  }
+  if (nchar(meta.data$Birth.Date[i])>10){
+    meta.data$Birth.Date[i]=substr(meta.data$Birth.Date[i],1,10)
+  }
+}
+meta.data$Birth.Date=as.Date(meta.data$Birth.Date,"%d/%m/%Y")
+meta.data$DOR=as.Date(meta.data$DOR,"%d/%m/%Y")
+
+#add missing ages
+meta.data$Age_Rec=as.numeric(meta.data$DOR-meta.data$Birth.Date)/365.25
+
 #---- code from Lewis et. al. 2021 ends here
 
 #tempo analysis----
@@ -119,13 +153,23 @@ for(i in 1:length(bird_ID)){
 avg_tempo= do.call(rbind,avg_tempo)
 
 tempo_df = get_sf_phenotype(phenotype_table = avg_tempo, metadata = meta.data, phenotype_index = 2)
-tempo_df = add_metadata(tempo_df, meta.data, cols = c(5,6))
+#copy meta data across
+tempo_df = add_metadata(tempo_df, meta.data, cols = c(3:7))
 tempo_df = dplyr::rename(tempo_df, sf_tempo_avg = sf_phenotype)
+#get social father's date of recording
+tempo_df = get_sf_phenotype(phenotype_table = tempo_df, metadata = meta.data, phenotype_index = 5 )
+tempo_df = dplyr::rename(tempo_df, sf_DOR = sf_phenotype)
+#get social father's birth dates
+tempo_df = get_sf_phenotype(phenotype_table = tempo_df, metadata = meta.data, phenotype_index = 4 )
+tempo_df = dplyr::rename(tempo_df, sf_DOB = sf_phenotype)
+#get social father's age
+tempo_df = get_sf_phenotype(phenotype_table = tempo_df, metadata = meta.data, phenotype_index = 6 )
+tempo_df = dplyr::rename(tempo_df, sf_Age_Rec = sf_phenotype)
 
 #fit model
 
 tempo.lme = lmekin(formula = tempo_avg ~ sf_tempo_avg + log(Age_Rec) + (1|Bird.ID) + (1|Clutch),
-                   varlist = 2*kin.trim, #*2 because kinship halves the correlation
+                   #varlist = 2*kin.trim, #*2 because kinship halves the correlation
                    data = tempo_df )
 
 tempo.lme2 = lmekin(formula = tempo_avg ~ sf_tempo_avg + log(Age_Rec) + (1|Bird.ID) + (1|Clutch),
