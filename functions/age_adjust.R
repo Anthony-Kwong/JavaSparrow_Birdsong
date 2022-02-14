@@ -72,10 +72,21 @@ age_adjust <- function(model, tol, data, kin){
   
   #iterate until the betas converge
   while( abs(new_beta - beta) > tol){
-    
+    #update beta
+    beta = new_beta
+    #age adjusted phenotype
+    y_new = cull_data$sf_y - beta*(adj_age_diff)
+    #update data with new adjusted phenotype
+    adj_data$y = y_new
+    #refit model
+    new_model = lmekin(formula = y ~ sf_y + log(Age_Rec) + (1|Bird.ID) + (1|Clutch),
+                       #need to make a new kinship matrix for the reduced population
+                       varlist = 2*kin.adj,
+                       data = adj_data)
+    new_beta = new_model$coefficients$fixed[3]
+    #print(abs(new_beta - beta))
   }
   
-  #tempo.lme = lmekin(formula = tempo_avg ~ sf_tempo_avg + log(Age_Rec) + (1|Bird.ID) + (1|Clutch),
-                     #varlist = 2*kin.trim, #*2 because kinship halves the correlation
-                    # data = tempo_df )
+  #return final model
+  return(new_model)
 }
