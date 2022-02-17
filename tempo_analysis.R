@@ -243,6 +243,39 @@ std.gap.lme.null = lmekin(formula = std_gap ~ sf_std_gap + log(Age_Rec) + (1|Bir
 
 1-pchisq(2*(std.gap.lme$loglik - std.gap.lme.null$loglik),1)
 
+#variance score
+
+#recall our tibble of gaps
+gap_data
+
+var_scores = list()
+for(i in 1:length(bird_ID)){
+  tar = bird_ID[i]
+  ind_data = gap_data %>%
+    dplyr::filter(ID == tar)
+  var_scores[[i]] <- tibble::tibble(Bird.ID = tar, var_score = gap_var_score(ind_data))
+}
+
+var_scores = do.call(rbind, var_scores)
+
+varscore_df = get_sf_phenotype(phenotype_table = var_scores, metadata = meta.data, phenotype_index = 2)
+varscore_df = add_metadata(varscore_df, meta.data, cols = c(5,6))
+varscore_df = dplyr::rename(varscore_df, sf_var_score = sf_phenotype)
+
+varscore.lme = lmekin(formula = var_score ~ sf_var_score + log(Age_Rec) + (1|Bird.ID) + (1|Clutch),
+                     varlist = 2*kin.trim, #*2 because kinship halves the correlation
+                     data = varscore_df )
+
+varscore.lme.null = lmekin(formula = var_score ~ sf_var_score + log(Age_Rec) + (1|Bird.ID) + (1|Clutch),
+                          varlist = 2*null.kin, #*2 because kinship halves the correlation
+                          data = varscore_df )
+
+
+1-pchisq(2*(varscore.lme$loglik - varscore.lme.null$loglik),1)
+
+
+
+?gap_var_score()
 
 #avg song duration
 
