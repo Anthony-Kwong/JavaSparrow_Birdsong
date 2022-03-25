@@ -169,7 +169,7 @@ tempo_df = dplyr::rename(tempo_df, sf_Age_Rec = sf_phenotype)
 #fit model
 
 tempo.lme = lmekin(formula = tempo_avg ~ sf_tempo_avg + log(Age_Rec) + (1|Bird.ID) + (1|Clutch),
-                   #varlist = 2*kin.trim, #*2 because kinship halves the correlation
+                   varlist = 2*kin.trim, #*2 because kinship halves the correlation
                    data = tempo_df )
 
 tempo.lme2 = lmekin(formula = tempo_avg ~ sf_tempo_avg + log(Age_Rec) + (1|Bird.ID) + (1|Clutch),
@@ -177,8 +177,24 @@ tempo.lme2 = lmekin(formula = tempo_avg ~ sf_tempo_avg + log(Age_Rec) + (1|Bird.
                    data = tempo_df )
 
 
-1-pchisq(2*(tempo.lme$loglik - tempo.lme2$loglik),1)
+tempo.lme3 = lmekin(formula = tempo_avg ~ sf_tempo_avg + log(Age_Rec) + (1|Bird.ID),
+                    varlist = 2*kin.trim,
+                    data = tempo_df )
 
+#no effect of clutch, indep of genetics
+
+#coefficients the same, residual error different because some of the variance is hidden when a kinship matrix is included
+
+1-pchisq(2*(tempo.lme$loglik - tempo.lme2$loglik),1)
+1-pchisq(2*(tempo.lme$loglik - tempo.lme3$loglik),1) #no effect of clutch, indep of genetics
+
+
+#test if there's any effect at for both clutch and pedigree
+tempo.lme4 = lmekin(formula = tempo_avg ~ sf_tempo_avg + log(Age_Rec) + (1|Bird.ID),
+                    varlist = 2*null.kin,
+                    data = tempo_df )
+
+1-pchisq(2*(tempo.lme$loglik - tempo.lme4$loglik),1)
 
 #avg gap length ----
 
@@ -212,7 +228,19 @@ gap.lme.null = lmekin(formula = log_avg_gap ~ sf_log_avg_gap + log(Age_Rec) + (1
                       varlist = 2*null.kin, #*2 because kinship halves the correlation
                       data = gap_df )
 
+gap.lme3 = lmekin(formula = log_avg_gap ~ sf_log_avg_gap + log(Age_Rec) + (1|Bird.ID),
+                 varlist = 2*kin.trim, #*2 because kinship halves the correlation
+                 data = gap_df )
+
+gap.lme4 = lmekin(formula = log_avg_gap ~ sf_log_avg_gap + log(Age_Rec) + (1|Bird.ID),
+                  varlist = 2*null.kin, #*2 because kinship halves the correlation
+                  data = gap_df )
+
+
 1-pchisq(2*(gap.lme$loglik - gap.lme.null$loglik),1)
+1-pchisq(2*(gap.lme$loglik - gap.lme3$loglik),1)
+1-pchisq(2*(gap.lme$loglik - gap.lme4$loglik),1)
+
 
 hist(resid(gap.lme))
 
@@ -240,8 +268,19 @@ std.gap.lme.null = lmekin(formula = std_gap ~ sf_std_gap + log(Age_Rec) + (1|Bir
                           varlist = 2*null.kin, #*2 because kinship halves the correlation
                           data = std_gap_df )
 
+std.gap.lme3 = lmekin(formula = std_gap ~ sf_std_gap + log(Age_Rec) + (1|Bird.ID),
+                     varlist = 2*kin.trim, #*2 because kinship halves the correlation
+                     data = std_gap_df )
+
+std.gap.lme4 = lmekin(formula = std_gap ~ sf_std_gap + log(Age_Rec) + (1|Bird.ID),
+                      varlist = 2*null.kin, #*2 because kinship halves the correlation
+                      data = std_gap_df )
+
 
 1-pchisq(2*(std.gap.lme$loglik - std.gap.lme.null$loglik),1)
+1-pchisq(2*(std.gap.lme$loglik - std.gap.lme3$loglik),1)
+1-pchisq(2*(std.gap.lme$loglik - std.gap.lme4$loglik),1)
+
 
 #variance score
 
@@ -273,13 +312,177 @@ varscore.lme.null = lmekin(formula = var_score ~ sf_var_score + log(Age_Rec) + (
 
 1-pchisq(2*(varscore.lme$loglik - varscore.lme.null$loglik),1)
 
+varscore.lme3 = lmekin(formula = var_score ~ sf_var_score + log(Age_Rec) + (1|Bird.ID),
+                      varlist = 2*kin.trim, #*2 because kinship halves the correlation
+                      data = varscore_df )
+
+varscore.lme4 = lmekin(formula = var_score ~ sf_var_score + log(Age_Rec) + (1|Bird.ID),
+                       varlist = 2*null.kin, #*2 because kinship halves the correlation
+                       data = varscore_df )
+
+1-pchisq(2*(varscore.lme$loglik - varscore.lme3$loglik),1)
+1-pchisq(2*(varscore.lme$loglik - varscore.lme4$loglik),1)
 
 
 ?gap_var_score()
 
+# We want to know: If a social father has more variable gaps, compared to the average. How variable will the son be. 
+
+#More variable, less consistent songs. (investigate performance based gaps, as opposed to deliberate, musical rests)
+
+#score measures internal consistency for each bird
+
+#no explicit comparison with population because that would not give any additional information given
+#reasonable biological assumptions
+
 #avg song duration
 
-#variance/expected value scores
+durations = list()
+recordings = unique(manual.note.classes$sound.files)
+for(i in 1:length(recordings)){
+  tar = recordings[i]
+  rec_data = manual.note.classes %>%
+    dplyr::filter(sound.files == tar)
+  durations[[i]] <- tibble::tibble(Bird.ID = rec_data$song_individual[1], 
+                                   dur = get_duration(rec_data))
+}
+
+durations = do.call(rbind, durations)
+
+mean_dur = lapply(bird_ID, function(ID){
+  ind_data = durations %>%
+    dplyr::filter(Bird.ID == ID)
+  tibble::tibble(Bird.ID = ID, mean_dur = mean(ind_data$dur))
+})
+
+mean_dur = do.call(rbind, mean_dur)
+
+durations_df = get_sf_phenotype(phenotype_table = mean_dur, metadata = meta.data, phenotype_index = 2)
+durations_df = add_metadata(durations_df, meta.data, cols = c(5,6))
+durations_df = dplyr::rename(durations_df, sf_mean_duration = sf_phenotype)
+
+durations.lme = lmekin(formula = mean_dur ~ sf_mean_duration + log(Age_Rec) + (1|Bird.ID) + (1|Clutch),
+                      varlist = 2*kin.trim, #*2 because kinship halves the correlation
+                      data = durations_df )
+
+durations.lme.null = lmekin(formula = mean_dur ~ sf_mean_duration + log(Age_Rec) + (1|Bird.ID) + (1|Clutch),
+                           varlist = 2*null.kin, #*2 because kinship halves the correlation
+                           data = durations_df )
+
+durations.lme3 = lmekin(formula = mean_dur ~ sf_mean_duration + log(Age_Rec) + (1|Bird.ID),
+                       varlist = 2*kin.trim, #*2 because kinship halves the correlation
+                       data = durations_df )
+
+
+1-pchisq(2*(durations.lme$loglik - durations.lme.null$loglik),1)
+1-pchisq(2*(durations.lme$loglik - durations.lme3$loglik),1)
+
+#check relationship between number of notes and song duration----
+
+recordings = unique(manual.note.classes$sound.files)
+
+dur_data = lapply(recordings, function(rec){
+  rec_data = manual.note.classes %>%
+    dplyr::filter(sound.files == rec)
+  dur = get_duration(rec_data)
+  note_num = nrow(rec_data)
+  id = rec_data$song_individual
+  tibble::tibble(note_num = note_num, duration = dur, Bird.ID = id)
+})
+
+dur_data = do.call(rbind, dur_data)
+dur_data$duration <- as.numeric(dur_data$duration)
+
+ggplot2::ggplot( data = dur_data, aes(note_num,duration)) +
+  geom_point()
+
+M1 = lm(duration~note_num, data = dur_data)
+
+#mean dur with mean notes
+
+mean_dur = lapply(bird_ID, function(ID){
+  ind_data = dur_data %>%
+    dplyr::filter(Bird.ID == ID)
+  tibble::tibble(Bird.ID = ID, mean_dur = mean(ind_data$duration),  mean_count = mean(ind_data$note_num))
+})
+
+mean_dur = do.call(rbind, mean_dur)
+
+ggplot2::ggplot(data = mean_dur, aes(mean_count,mean_dur)) +
+  geom_point()
+
+M2 = lm(mean_count~mean_dur, data = mean_dur)
+
+#mean log scores
+
+#compute vector of mean gaps for each transitition for the whole population
+trans = unique(gap_data$transitions)
+
+pop_means = list()
+for(i in 1:length(trans)){
+  tar = trans[i]
+  fil_data = gap_data %>%
+    dplyr::filter(transitions == tar)
+  pop_means[[i]] = tibble::tibble(
+    mean_gap = mean(fil_data$gap_dur), 
+    transitions = tar
+  )
+}
+
+pop_means = do.call(rbind, pop_means)
+
+gap_scores = list()
+for(i in 1:length(bird_ID)){
+  tar = bird_ID[i]
+  ind_data = gap_data %>%
+    dplyr::filter(ID == tar)
+  gap_scores[[i]] = tibble::tibble(Bird.ID = tar,
+                                   gap_score = gap_score(ind_data, pop_means))
+}
+
+gap_score_df = do.call(rbind, gap_scores)
+
+gap_score_df = get_sf_phenotype(phenotype_table = gap_score_df, metadata = meta.data, phenotype_index = 2)
+gap_score_df = add_metadata(gap_score_df, meta.data, cols = c(5,6))
+gap_score_df = dplyr::rename(gap_score_df, sf_gap_score = sf_phenotype)
+
+gapscore.lme = lmekin(formula = gap_score ~ sf_gap_score + log(Age_Rec) + (1|Bird.ID) + (1|Clutch),
+                       varlist = 2*kin.trim, #*2 because kinship halves the correlation
+                       data = gap_score_df )
+
+gapscore.lme.null = lmekin(formula = gap_score ~ sf_gap_score + log(Age_Rec) + (1|Bird.ID) + (1|Clutch),
+                            varlist = 2*null.kin, #*2 because kinship halves the correlation
+                            data = gap_score_df)
+
+gapscore.lme3 = lmekin(formula = gap_score ~ sf_gap_score + log(Age_Rec) + (1|Bird.ID),
+                      varlist = 2*kin.trim, #*2 because kinship halves the correlation
+                      data = gap_score_df )
+
+
+1-pchisq(2*(gapscore.lme$loglik - gapscore.lme.null$loglik),1)
+1-pchisq(2*(gapscore.lme$loglik - gapscore.lme3$loglik),1)
+
+## exploratory plots for investigating note duration
+
+plot(x = durations_df$mean_dur, y = durations_df$sf_mean_duration)
+
+durations.lme$residuals
+predict(durations.lme)
+
+plot(x = durations.lme$residuals, )
+
+library(coxme)
+predict(durations.lme, data = durations_df)
+
+model = lmer(formula = log(mean_dur) ~ log(sf_mean_duration) + log(Age_Rec) + (1|Clutch),
+             data = durations_df )
+
+
+plot(predict(model),resid(model))
+
+
+
+
 
 
 #D_s ~ D_f + age + clutch + pedigree 
@@ -297,4 +500,8 @@ varscore.lme.null = lmekin(formula = var_score ~ sf_var_score + log(Age_Rec) + (
 #father_gap_length
 
 #For every note a father sings, divide by the mean of his A-B notes 
+
+#son's individual gap lengths ~ transition type + sf mean + the rest + position in song
+
+#fractional position plots gap length
 
