@@ -99,6 +99,10 @@ null.kin=diag(nrow(kin.trim))
 colnames(null.kin)=colnames(kin.trim)
 rownames(null.kin)=rownames(kin.trim)
 
+#save the kinship matrices for future use
+saveRDS(kin.trim, file = "~/Documents/GitHub/JavaSparrow_Birdsong/data/kin.trim.rds" )
+saveRDS(null.kin, file = "~/Documents/GitHub/JavaSparrow_Birdsong/data/null.kin.rds" )
+
 #clutch is nest they grew up in
 
 #Consistency increases with times produced for all three predictors. We will estimate ages for the six birds with missing ages. This will allow us to estimate their residual consistency (after controlling for note features and age) to use as a response variable, and then to estimate the observed consistency and residual consistency for social fathers when they are raising sons through recursive fitting. 
@@ -129,6 +133,8 @@ meta.data$DOR=as.Date(meta.data$DOR,"%d/%m/%Y")
 #add missing ages
 meta.data$Age_Rec=as.numeric(meta.data$DOR-meta.data$Birth.Date)/365.25
 
+#save processed metadata table
+readr::write_csv(meta.data, file = "~/Documents/GitHub/JavaSparrow_Birdsong/data/meta_data.csv")
 #---- code from Lewis et. al. 2021 ends here
 
 #tempo analysis----
