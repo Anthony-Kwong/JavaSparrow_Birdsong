@@ -181,6 +181,17 @@ tempo.lme3 = lmekin(formula = tempo_avg ~ sf_tempo_avg + log(Age_Rec) + (1|Bird.
                     varlist = 2*kin.trim,
                     data = tempo_df )
 
+#age adjust example
+
+#assemble small dataset with the right columns for age_adjust()
+small_tempo_df <- cbind(tempo_df[,c(1:4)], tempo_df[,c(10,11)], tempo_df[,c(6,7)])
+adj_tempo.lme <- age_adjust(model = tempo.lme,tol = 0.05, data = small_tempo_df, kin = kin.trim)
+adj_tempo.lme2 <- age_adjust(model = tempo.lme2, tol = 0.05, data = small_tempo_df, kin = null.kin)
+adj_tempo.lme3 <- age_adjust(model = tempo.lme3, tol = 0.05, data = small_tempo_df, kin = kin.trim)
+
+#no changes to results
+
+
 #no effect of clutch, indep of genetics
 
 #coefficients the same, residual error different because some of the variance is hidden when a kinship matrix is included
@@ -213,18 +224,32 @@ for(i in 1:length(bird_ID)){
 }
 
 avg_gap= do.call(rbind,avg_gap)
-
 gap_df = get_sf_phenotype(phenotype_table = avg_gap, metadata = meta.data, phenotype_index = 2)
 gap_df = add_metadata(gap_df, meta.data, cols = c(5,6))
 gap_df = dplyr::rename(gap_df, sf_log_avg_gap = sf_phenotype)
 
-#fit model
+#copy meta data across, Birth.Date and DOR
+gap_df = add_metadata(gap_df, meta.data, cols = c(3:4))
 
+#get social father's date of recording
+t<- get_sf_phenotype(phenotype_table = gap_df, metadata = meta.data, phenotype_index = 7 )
+
+gap_df = get_sf_phenotype(phenotype_table = gap_df, metadata = meta.data, phenotype_index = 7 )
+gap_df = dplyr::rename(gap_df, sf_DOR = sf_phenotype)
+#get social father's birth dates
+gap_df = get_sf_phenotype(phenotype_table = gap_df, metadata = meta.data, phenotype_index = 6 )
+gap_df = dplyr::rename(gap_df, sf_DOB = sf_phenotype)
+
+#get social father's age
+gap_df = get_sf_phenotype(phenotype_table = gap_df, metadata = meta.data, phenotype_index = 4 )
+gap_df = dplyr::rename(gap_df, sf_Age_Rec = sf_phenotype)
+
+#fit model
 gap.lme = lmekin(formula = log_avg_gap ~ sf_log_avg_gap + log(Age_Rec) + (1|Bird.ID) + (1|Clutch),
                    varlist = 2*kin.trim, #*2 because kinship halves the correlation
                    data = gap_df )
 
-gap.lme.null = lmekin(formula = log_avg_gap ~ sf_log_avg_gap + log(Age_Rec) + (1|Bird.ID) + (1|Clutch),
+gap.lme2 = lmekin(formula = log_avg_gap ~ sf_log_avg_gap + log(Age_Rec) + (1|Bird.ID) + (1|Clutch),
                       varlist = 2*null.kin, #*2 because kinship halves the correlation
                       data = gap_df )
 
@@ -240,6 +265,16 @@ gap.lme4 = lmekin(formula = log_avg_gap ~ sf_log_avg_gap + log(Age_Rec) + (1|Bir
 1-pchisq(2*(gap.lme$loglik - gap.lme.null$loglik),1)
 1-pchisq(2*(gap.lme$loglik - gap.lme3$loglik),1)
 1-pchisq(2*(gap.lme$loglik - gap.lme4$loglik),1)
+
+#check to see if age adjustment changes results
+
+#assemble small dataset with the right columns for age_adjust()
+small_gap_df = cbind(gap_df[,1:3], gap_df[,6], gap_df[,9:10], gap_df[,4:5])
+adj_gap.lme <- age_adjust(model = tempo.lme,tol = 0.05, data = small_gap_df, kin = kin.trim)
+adj_gap.lme2 <- age_adjust(model = tempo.lme2, tol = 0.05, data = small_gap_df, kin = null.kin)
+adj_gap.lme3 <- age_adjust(model = tempo.lme3, tol = 0.05, data = small_gap_df, kin = kin.trim)
+
+
 
 
 hist(resid(gap.lme))

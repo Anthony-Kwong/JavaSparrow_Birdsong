@@ -8,11 +8,11 @@
 #' process iterates until the change in the beta coefficients in the next step is smaller than
 #' the input tolerance level. 
 #' 
-#' This function is NOT standalone and is designed for use in this context only. 
+#' This function is NOT standalone and is designed to age adjust for the models in the tempo project.  
 #'
 #' @param model : mixed effect model regressing social father phenotype with the son's phenotype
 #' @param tol : Tolerance level for the converge of the beta coefficients for age. 
-#' @param data : the original birdsong data set to fit the model with Bird.ID, phenotype, social father's phenotype, Age_Rec and Clutch(in that order). 
+#' @param data : the original birdsong data set to fit the model with Bird.ID, phenotype, social father's phenotype, Birth.Date, sf_DOB, sf_Age_Rec, Age_Rec and Clutch(in that order). 
 #' @param kin_mat: The kinship matrix associated with the data set. 
 #'
 #' @return: The final mixed effects model of class lmekin.
