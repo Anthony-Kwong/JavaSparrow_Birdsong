@@ -136,5 +136,5 @@ intro_df2$Bird.ID <-as.factor(intro_df2$Bird.ID)
 #regress intro_len with age
 library(lme4)
 model2 <- lmer(intro_len ~ log(Age_Rec)+ (1|Bird.ID), data = intro_df2)
-
+summary(model2)
 #significant age effect
