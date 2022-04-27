@@ -1,6 +1,6 @@
 #script to generate plots for tempo project
 
-setwd("./tempo/figures/")
+setwd("./son_sf_plots/")
 
 #run all the code chunks from tempo_project first
 
