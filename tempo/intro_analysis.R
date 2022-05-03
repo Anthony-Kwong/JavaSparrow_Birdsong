@@ -94,11 +94,36 @@ intro.lme3 = lmekin(formula = avg_intro_len ~ sf_intro_len + log(Age_Rec) + (1|B
 #plot relationship
 
 library(ggplot2)
-ggplot(intro_df, aes(avg_intro_len, log(Age_Rec) )) +
-  geom_point()
+library(ggthemes)
 
-ggplot(intro_df, aes(avg_intro_len, sf_intro_len)) +
-  geom_point()
+#base plot 
+ggplot(intro_df, aes(avg_intro_len, log(Age_Rec) )) +
+  geom_point() +
+  theme_stata()
+
+ggplot(intro_df, aes(avg_intro_len, log(Age_Rec) )) +
+  geom_point() +
+  theme_economist()
+
+intro_vs_age <- ggplot(intro_df, aes(avg_intro_len, log(Age_Rec), color = "orangered" )) +
+  geom_point() +
+  geom_smooth(method = lm, color = "blue") +
+  theme(legend.position="none") +
+  xlab("average introduction length") + 
+  ylab("log(Age) at recording")
+
+ggsave(intro_vs_age, filename = "~/Documents/GitHub/JavaSparrow_Birdsong/tempo/figures/intro_vs_age.png")
+
+intro_plot <- ggplot(intro_df, aes(avg_intro_len, sf_intro_len, color = "orangered")) +
+  geom_point() + 
+  #add regression line
+  geom_smooth(method = lm, color = "blue") +
+  #remove legend as it's not needed here
+  theme(legend.position="none") + 
+  xlab("average introduction length (sons)") +
+  ylab("average introduction length (social father)")
+
+ggsave(intro_plot, filename = "~/Documents/GitHub/JavaSparrow_Birdsong/tempo/figures/son_sf_plots/intro_length_plot.png")
 
 #We know investigate the relationship between age and intro length
 
