@@ -68,19 +68,19 @@ kin.trim <- readRDS("~/Documents/GitHub/JavaSparrow_Birdsong/data/kin.trim.rds")
 null.kin <- readRDS("~/Documents/GitHub/JavaSparrow_Birdsong/data/null.kin.rds")
 
 
-intro.lme = lmekin(formula = avg_intro_len ~ sf_intro_len + log(Age_Rec) + (1|Bird.ID) + (1|Clutch),
+intro.lme = lmekin(formula = log(avg_intro_len+1) ~ log(sf_intro_len+1) + log(Age_Rec) + (1|Bird.ID) + (1|Clutch),
                    varlist = 2*kin.trim, #*2 because kinship halves the correlation
                    data = intro_df )
 
 #no sig result for sf, sig result for age
 
 #no genetics model
-intro.lme2 = lmekin(formula = avg_intro_len ~ sf_intro_len + log(Age_Rec) + (1|Bird.ID) + (1|Clutch),
+intro.lme2 = lmekin(formula = log(avg_intro_len+1) ~ log(sf_intro_len+1) + log(Age_Rec) + (1|Bird.ID) + (1|Clutch),
                    varlist = null.kin,
                    data = intro_df )
 
 #no clutch model
-intro.lme3 = lmekin(formula = avg_intro_len ~ sf_intro_len + log(Age_Rec) + (1|Bird.ID),
+intro.lme3 = lmekin(formula = log(avg_intro_len+1) ~ log(sf_intro_len+1) + log(Age_Rec) + (1|Bird.ID),
                     varlist = null.kin,
                     data = intro_df )
 
@@ -97,31 +97,31 @@ library(ggplot2)
 library(ggthemes)
 
 #base plot 
-ggplot(intro_df, aes(avg_intro_len, log(Age_Rec) )) +
+ggplot(intro_df, aes(log(avg_intro_len+1), log(Age_Rec) )) +
   geom_point() +
   theme_stata()
 
-ggplot(intro_df, aes(avg_intro_len, log(Age_Rec) )) +
+ggplot(intro_df, aes(log(avg_intro_len+1), log(Age_Rec) )) +
   geom_point() +
   theme_economist()
 
-intro_vs_age <- ggplot(intro_df, aes(avg_intro_len, log(Age_Rec), color = "orangered" )) +
+intro_vs_age <- ggplot(intro_df, aes( log(avg_intro_len+1), log(Age_Rec), color = "orangered" )) +
   geom_point() +
   geom_smooth(method = lm, color = "blue") +
   theme(legend.position="none") +
-  xlab("average introduction length") + 
+  xlab("log average introduction length") + 
   ylab("log(Age) at recording")
 
 ggsave(intro_vs_age, filename = "~/Documents/GitHub/JavaSparrow_Birdsong/tempo/figures/intro_vs_age.png")
 
-intro_plot <- ggplot(intro_df, aes(avg_intro_len, sf_intro_len, color = "orangered")) +
+intro_plot <- ggplot(intro_df, aes(log(avg_intro_len+1), log(sf_intro_len+1), color = "orangered")) +
   geom_point() + 
   #add regression line
   geom_smooth(method = lm, color = "blue") +
   #remove legend as it's not needed here
   theme(legend.position="none") + 
-  xlab("average introduction length (sons)") +
-  ylab("average introduction length (social father)")
+  xlab("log average introduction length (sons)") +
+  ylab("log average introduction length (social father)")
 
 ggsave(intro_plot, filename = "~/Documents/GitHub/JavaSparrow_Birdsong/tempo/figures/son_sf_plots/intro_length_plot.png")
 
@@ -160,6 +160,6 @@ intro_df2$Bird.ID <-as.factor(intro_df2$Bird.ID)
 
 #regress intro_len with age
 library(lme4)
-model2 <- lmer(intro_len ~ log(Age_Rec)+ (1|Bird.ID), data = intro_df2)
+model2 <- lmer(log(intro_len+1) ~ log(Age_Rec)+ (1|Bird.ID), data = intro_df2)
 summary(model2)
 #significant age effect
