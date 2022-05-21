@@ -105,12 +105,12 @@ ggplot(intro_df, aes(log(avg_intro_len+1), log(Age_Rec) )) +
   geom_point() +
   theme_economist()
 
-intro_vs_age <- ggplot(intro_df, aes( log(avg_intro_len+1), log(Age_Rec), color = "orangered" )) +
+intro_vs_age <- ggplot(intro_df, aes( log(avg_intro_len+1), log(Age_Rec))) +
   geom_point() +
-  geom_smooth(method = lm, color = "blue") +
   theme(legend.position="none") +
   xlab("log average introduction length") + 
-  ylab("log(Age) at recording")
+  ylab("log(Age) at recording") +
+  theme_bw()
 
 ggsave(intro_vs_age, filename = "~/Documents/GitHub/JavaSparrow_Birdsong/tempo/figures/intro_vs_age.png")
 

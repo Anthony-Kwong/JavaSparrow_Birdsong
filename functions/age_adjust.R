@@ -11,7 +11,7 @@
 #' This function is NOT standalone and is designed to age adjust for the models in the tempo project.  
 #'
 #' @param model : mixed effect model regressing social father phenotype with the son's phenotype
-#' @param tol : Tolerance level for the converge of the beta coefficients for age. 
+#' @param tol : Tolerance level for the convergence of the beta coefficients for age. 
 #' @param data : the original birdsong data set to fit the model with Bird.ID, phenotype, social father's phenotype, Birth.Date, sf_DOB, sf_Age_Rec, Age_Rec and Clutch(in that order). 
 #' @param kin_mat: The kinship matrix associated with the data set. 
 #'
@@ -44,17 +44,27 @@ age_adjust <- function(model, tol, data, kin){
   #first we cull the birds with no social fathers, e.g. first generation
   cull_data = na.omit(data)
   
-  #convert time differences back into years
-  sf_age_at_birth = as.numeric( (cull_data$Birth.Date - cull_data$sf_DOB)/365 )
-  #compute difference and transform into log space
-  adj_age_diff = log(sf_age_at_birth) - log(cull_data$sf_Age_Rec)
-    
-  #age adjusted phenotype
-  y_new = cull_data$sf_y - beta*(adj_age_diff)
+  #the son's were raised at a different time than when the social fathers were recorded
+  #since songs can change over time, we want to adjust for the sf at recording sounding different from 
+  #when they tutored their sons
   
-  #create new dataframe with adjusted ages
+  
+  #check these 4 lines
+  #compute time difference in years
+  time_diff = as.numeric( (cull_data$sf_DOR - cull_data$Birth.Date)/365 )
+  #compute sf age on son's birthday
+  sf_adj_age = cull_data$sf_Age_Rec - time_diff
+  #convert difference to log space
+  log_diff = log(cull_data$sf_Age_Rec) - log(sf_adj_age)
+  #compute age adjusted phenotype, negative sign because when the sf was recorded
+  #after son's birthday, sf phenotype at recording would have gone up by beta*diff compared to 
+  #son's birthday. If sf was recorded before son's birthday, sf phenotype would be beta*diff
+  #lower than what it was at son's birthday so we would add beta*diff
+  y_new = cull_data$sf_y - beta*(log_diff)
+  
+  #create new dataframe with adjusted phenotypes for sf
   adj_data = cull_data
-  adj_data$y = y_new
+  adj_data$sf_y = y_new
   #adj_data$Bird.ID <- as.factor(adj_data$Bird.ID)
   
   #make a reduced kinship matrix to suit adj_data ----
@@ -75,16 +85,15 @@ age_adjust <- function(model, tol, data, kin){
     #update beta
     beta = new_beta
     #age adjusted phenotype
-    y_new = cull_data$sf_y - beta*(adj_age_diff)
+    y_new = cull_data$sf_y - beta*(log_diff)
     #update data with new adjusted phenotype
-    adj_data$y = y_new
+    adj_data$sf_y = y_new
     #refit model
     new_model = lmekin(formula = y ~ sf_y + log(Age_Rec) + (1|Bird.ID) + (1|Clutch),
                        #need to make a new kinship matrix for the reduced population
                        varlist = 2*kin.adj,
                        data = adj_data)
     new_beta = new_model$coefficients$fixed[3]
-    #print(abs(new_beta - beta))
   }
   
   #return final model

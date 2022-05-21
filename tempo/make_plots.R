@@ -1,6 +1,6 @@
 #script to generate plots for tempo project
 
-setwd("./son_sf_plots/")
+setwd("~/Documents/GitHub/JavaSparrow_Birdsong/tempo/figures/son_sf_plots/")
 
 #run all the code chunks from tempo_project first
 
@@ -38,15 +38,16 @@ for(i in 1:length(data)){
   statistic = names[i]
   
   #make plot
-  plot <- ggplot(data[[i]], aes(son_phenotype, sf_phenotype, color = "orangered")) +
+  plot <- ggplot(data[[i]], aes(x = sf_phenotype, y = son_phenotype)) +
     geom_point() + 
     #add regression line
-    geom_smooth(method = "lm", color = "blue")+
+    #geom_smooth(method = "lm", color = "blue")+
     ggtitle("With Introductions") +
     #remove redundant legend because we have no classes
     theme(legend.position="none") +
-    xlab(paste("son's",statistic)) +
-    ylab(paste("social fathers's",statistic))
+    ylab(paste("son's",statistic)) +
+    xlab(paste("social fathers's",statistic)) +
+    theme_bw()
   
   #title plot using the statistics
   plot_name = paste(statistic,"_plot.png",sep = "")
@@ -78,15 +79,65 @@ for(i in 1:length(nointro_data)){
   statistic = names[i]
   
   #make plot
-  plot <- ggplot(nointro_data[[i]], aes(son_phenotype, sf_phenotype, color = "orangered")) +
+  plot <- ggplot(nointro_data[[i]], aes( x=sf_phenotype, y=son_phenotype)) +
     geom_point() + 
     #add regression line
-    geom_smooth(method = "lm", color = "blue")+
+    #geom_smooth(method = "lm", color = "blue")+
     ggtitle("Without Introductions") +
     #remove redundant legend because we have no classes
     theme(legend.position="none") +
-    xlab(paste("son's",statistic)) +
-    ylab(paste("social fathers's",statistic))
+    ylab(paste("son's",statistic)) +
+    xlab(paste("social fathers's",statistic)) +
+    theme_bw()
+  
+  #title plot using the statistics
+  plot_name = paste("nointro ",statistic,"_plot.png",sep = "")
+  #save plot in tempo directory
+  ggsave(plot, file = plot_name)
+}
+
+#plot for phenotype vs age ----
+
+setwd("../son_age_plots/")
+#full songs
+for(i in 1:length(data)){
+  #name of statistic
+  statistic = names[i]
+  
+  #make plot
+  plot <- ggplot(data[[i]], aes(x = Age_Rec, y = son_phenotype)) +
+    geom_point() + 
+    #add regression line
+    #geom_smooth(method = "lm", color = "blue")+
+    ggtitle("With Introductions") +
+    #remove redundant legend because we have no classes
+    theme(legend.position="none") +
+    ylab(paste("son's",statistic)) +
+    xlab(paste("son's age at recording")) +
+    theme_bw()
+  
+  #title plot using the statistics
+  plot_name = paste(statistic,"_plot.png",sep = "")
+  #save plot in tempo directory
+  ggsave(plot, file = plot_name)
+}
+
+#nointro_songs
+for(i in 1:length(nointro_data)){
+  #name of statistic
+  statistic = names[i]
+  
+  #make plot
+  plot <- ggplot(nointro_data[[i]], aes( x=Age_Rec, y=son_phenotype)) +
+    geom_point() + 
+    #add regression line
+    #geom_smooth(method = "lm", color = "blue")+
+    ggtitle("Without Introductions") +
+    #remove redundant legend because we have no classes
+    theme(legend.position="none") +
+    ylab(paste("son's",statistic)) +
+    xlab(paste("son's age at recording")) +
+    theme_bw()
   
   #title plot using the statistics
   plot_name = paste("nointro ",statistic,"_plot.png",sep = "")
@@ -128,16 +179,26 @@ for(i in 1:length(start_classes)){
   data = gap_box_df %>%
     dplyr::filter(start_class == class)
   
-  plot <- ggplot(data, aes(y = gap_dur, col = transitions)) +
+  plot <- ggplot(data, aes(y = log(gap_dur), col = transitions)) +
     geom_boxplot() +
-    ylab("gap durations") + 
+    ylab("log gap durations") + 
     xlab(" transitions")
   #using class here would break code because it has /
   plot_name = paste("transition_plot_", class,".png" , sep ="")
   ggsave(plot, file = plot_name)
 }
 
-###
+big_boxplot <- ggplot(gap_box_df, aes(y = log(gap_dur), col = transitions)) +
+  geom_boxplot() +
+  ylab("log gap durations") + 
+  xlab(" transitions")
+
+ggsave(big_boxplot, file = "all_transition_plot.pdf", height = 20, width = 20)
+
+ggsave(big_boxplot, file = "all_transition_plot.png", height = 20, width = 20)
+
+
+### code to help write previous loop
 class = "Slope"
 
 data = gap_box_df %>%
