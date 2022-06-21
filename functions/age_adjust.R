@@ -12,7 +12,7 @@
 #'
 #' @param model : mixed effect model regressing social father phenotype with the son's phenotype
 #' @param tol : Tolerance level for the convergence of the beta coefficients for age. 
-#' @param data : the original birdsong data set to fit the model with Bird.ID, phenotype, social father's phenotype, Birth.Date, sf_DOB, sf_Age_Rec, Age_Rec and Clutch(in that order). 
+#' @param data : the original birdsong data set to fit the model with Bird.ID, phenotype, social father's phenotype, Birth.Date, sf_Age_Rec, Age_Rec and Clutch(in that order). 
 #' @param kin_mat: The kinship matrix associated with the data set. 
 #'
 #' @return: The final mixed effects model of class lmekin.
@@ -51,7 +51,8 @@ age_adjust <- function(model, tol, data, kin){
   
   #check these 4 lines
   #compute time difference in years
-  time_diff = as.numeric( (cull_data$sf_DOR - cull_data$Birth.Date)/365 )
+  time_diff = as.numeric( (as.Date(cull_data$sf_DOR) - as.Date(cull_data$Birth.Date))/365 )
+  
   #compute sf age on son's birthday
   sf_adj_age = cull_data$sf_Age_Rec - time_diff
   #convert difference to log space

@@ -32,7 +32,7 @@ head( becky.note.df )
 ###################################################################
 
 # Draw an example
-my.song <- "JS0003-20110501-007"
+my.song <- "JS0171-20180511-001"
 draw.spectrogram( my.song, 
 	anthony.note.df, becky.note.df,
 	paste( wav.subdir )
