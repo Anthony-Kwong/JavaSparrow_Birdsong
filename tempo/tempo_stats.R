@@ -216,14 +216,17 @@ fit_birdmodel <- function(stat_table, kin.trim , null.kin , model_output = T){
   M2 = lmekin(ff, varlist = 2*null.kin, data = stat_table)
   #no clutch model
   M3 = lmekin(nc, varlist = 2*kin.trim, data = stat_table)
+  #no clutch, no genetics model
+  M4 = lmekin(nc, varlist = 2*null.kin, data = stat_table)
 
   #age adjustment models
   AM1 <- age_adjust(model = M1, tol = 10^-6, data = stat_table, kin = kin.trim)
   AM2 <- age_adjust(model = M2, tol = 10^-6, data = stat_table, kin = null.kin)
   AM3 <- age_adjust(model = M3, tol = 10^-6, data = stat_table, kin = kin.trim)
+  AM4 <- age_adjust(model = M3, tol = 10^-6, data = stat_table, kin = null.kin)
   
   if(model_output == TRUE){
-    models = list(M1, M2, M3, AM1, AM2, AM3)
+    models = list(M1, M2, M3,M4, AM1, AM2, AM3, AM4)
     return(models)
   } else {
     #report age adjusted model
@@ -237,11 +240,16 @@ fit_birdmodel <- function(stat_table, kin.trim , null.kin , model_output = T){
     chi_g = 1-pchisq(2*(AM1$loglik - AM2$loglik),1)
     #test sif. of clutch
     chi_c = 1-pchisq(2*(AM1$loglik - AM3$loglik),1)
+    #test the full model against model with neither clutch nor genetics
+    chi_n = 1-pchisq(2*(AM1$loglik - AM4$loglik),2)
     
     response = colnames(stat_table)[2]
     
     res_table = tibble::tibble(response = response, beta_sf = beta_sfy, p_sf = p_sfy, 
-             beta_logAge = beta_age, p_age = p_age, pedigree = chi_g, clutch = chi_c)
+             beta_logAge = beta_age, p_age = p_age, pedigree = chi_g, clutch = chi_c, neither = chi_n,
+             #print loglikelihoods of the all 4 models
+             AM1_loglik = AM1$loglik, AM2_loglike = AM2$loglik, AM3_loglike = AM3$loglik, AM4_loglike = AM4$loglik
+             )
     return(res_table)
   }
 }
