@@ -72,6 +72,16 @@ intro.lme = lmekin(formula = avg_intro_len ~ sf_intro_len + log(Age_Rec) + (1|Bi
                    varlist = 2*kin.trim, #*2 because kinship halves the correlation
                    data = intro_df )
 
+#checking models, We fitted a standard lme because the current tools don't work with lmekin
+
+library(performance)
+intro.lme_simp = lme4::lmer(formula = avg_intro_len ~ sf_intro_len + log(Age_Rec) + (1|Clutch),
+                            data = intro_df)
+check_overdispersion(intro.lme_simp)
+check_zeroinflation(intro.lme_simp)
+#not necessary because we aren't using count data in the models. they are averages
+
+
 #no sig result for sf, sig result for age
 
 #no genetics model

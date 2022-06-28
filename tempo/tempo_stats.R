@@ -28,8 +28,6 @@ null.kin = readRDS(file = "~/Documents/GitHub/JavaSparrow_Birdsong/data/null.kin
 #input: unit table, meta data table
 #output: dataframe with bird ID, son's statistics, sf statistics, son's BD, son's DOR, son's Age_Rec, Clutch, SF ID, Sf DOR, sf Age_rec
 compute_res <- function(unit_table, meta.data){
-  #for building
-  unit_table = full_ut
   
   #compute tempo----
   tempo_data = get_tempo(unit_table) %>% 
@@ -235,7 +233,7 @@ fit_birdmodel <- function(stat_table, kin.trim , null.kin , model_output = T){
     beta_age = mod_tab$beta[3]
     p_age = mod_tab$p[3]
     
-    #test sig. of genetics
+    #test sig. of genetics using chi square log likelihood ratio test. The test statistic is 2*difference in the loglikelihood. Distribution is approximately chi square with df being df(full model)-df(reduced model) 
     chi_g = 1-pchisq(2*(AM1$loglik - AM2$loglik),1)
     #test sif. of clutch
     chi_c = 1-pchisq(2*(AM1$loglik - AM3$loglik),1)
