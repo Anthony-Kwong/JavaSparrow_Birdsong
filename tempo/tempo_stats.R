@@ -213,17 +213,17 @@ fit_birdmodel <- function(stat_table, kin.trim , null.kin , model_output = T){
   #full model
   M1 = lmekin(ff, varlist = 2*kin.trim, data = stat_table)
   #no genetics model
-  M2 = lmekin(ff, varlist = 2*null.kin, data = stat_table)
+  M2 = lmekin(ff, varlist = null.kin, data = stat_table)
   #no clutch model
   M3 = lmekin(nc, varlist = 2*kin.trim, data = stat_table)
   #no clutch, no genetics model
-  M4 = lmekin(nc, varlist = 2*null.kin, data = stat_table)
+  M4 = lmekin(nc, varlist = null.kin, data = stat_table)
 
   #age adjustment models
-  AM1 <- age_adjust(model = M1, tol = 10^-6, data = stat_table, kin = kin.trim)
-  AM2 <- age_adjust(model = M2, tol = 10^-6, data = stat_table, kin = null.kin)
-  AM3 <- age_adjust(model = M3, tol = 10^-6, data = stat_table, kin = kin.trim)
-  AM4 <- age_adjust(model = M3, tol = 10^-6, data = stat_table, kin = null.kin)
+  AM1 <- age_adjust(model = M1, tol = 10^-4, data = stat_table, kin = kin.trim)
+  AM2 <- age_adjust(model = M2, tol = 10^-4, data = stat_table, kin = null.kin)
+  AM3 <- age_adjust(model = M3, tol = 10^-4, data = stat_table, kin = kin.trim)
+  AM4 <- age_adjust(model = M3, tol = 10^-4, data = stat_table, kin = null.kin)
   
   if(model_output == TRUE){
     models = list(M1, M2, M3,M4, AM1, AM2, AM3, AM4)
@@ -248,7 +248,7 @@ fit_birdmodel <- function(stat_table, kin.trim , null.kin , model_output = T){
     res_table = tibble::tibble(response = response, beta_sf = beta_sfy, p_sf = p_sfy, 
              beta_logAge = beta_age, p_age = p_age, pedigree = chi_g, clutch = chi_c, neither = chi_n,
              #print loglikelihoods of the all 4 models
-             AM1_loglik = AM1$loglik, AM2_loglike = AM2$loglik, AM3_loglike = AM3$loglik, AM4_loglike = AM4$loglik
+             full_loglik = AM1$loglik, no.ped_loglike = AM2$loglik, no.clutch_loglike = AM3$loglik, neither_loglike = AM4$loglik
              )
     return(res_table)
   }

@@ -67,22 +67,21 @@ intro_df = dplyr::rename(intro_df, sf_intro_len= sf_phenotype)
 kin.trim <- readRDS("~/Documents/GitHub/JavaSparrow_Birdsong/data/kin.trim.rds")
 null.kin <- readRDS("~/Documents/GitHub/JavaSparrow_Birdsong/data/null.kin.rds")
 
-
+#full model
 intro.lme = lmekin(formula = avg_intro_len ~ sf_intro_len + log(Age_Rec) + (1|Bird.ID) + (1|Clutch),
                    varlist = 2*kin.trim, #*2 because kinship halves the correlation
                    data = intro_df )
 
+#run age adjustment as well just to check
+
 #checking models, We fitted a standard lme because the current tools don't work with lmekin
 
-library(performance)
-intro.lme_simp = lme4::lmer(formula = avg_intro_len ~ sf_intro_len + log(Age_Rec) + (1|Clutch),
-                            data = intro_df)
-check_overdispersion(intro.lme_simp)
-check_zeroinflation(intro.lme_simp)
+# library(performance)
+# intro.lme_simp = lme4::lmer(formula = avg_intro_len ~ sf_intro_len + log(Age_Rec) + (1|Clutch),
+#                             data = intro_df)
+# check_overdispersion(intro.lme_simp)
+# check_zeroinflation(intro.lme_simp)
 #not necessary because we aren't using count data in the models. they are averages
-
-
-#no sig result for sf, sig result for age
 
 #no genetics model
 intro.lme2 = lmekin(formula = avg_intro_len ~ sf_intro_len + log(Age_Rec) + (1|Bird.ID) + (1|Clutch),
@@ -91,15 +90,26 @@ intro.lme2 = lmekin(formula = avg_intro_len ~ sf_intro_len + log(Age_Rec) + (1|B
 
 #no clutch model
 intro.lme3 = lmekin(formula = avg_intro_len ~ sf_intro_len + log(Age_Rec) + (1|Bird.ID),
-                    varlist = null.kin,
+                    varlist = 2*kin.trim,
                     data = intro_df )
 
-#full model vs no genetics model
-1-pchisq(2*(intro.lme$loglik - intro.lme2$loglik),1)
-#full model vs no clutch model
-1-pchisq(2*(intro.lme$loglik - intro.lme3$loglik),1)
+#neither model
+intro.lme4 = lmekin(formula = avg_intro_len ~ sf_intro_len + log(Age_Rec) + (1|Bird.ID),
+                    varlist = null.kin,
+                    data = intro_df)
 
-#no sig effects for genetics and clutch, clutch is close with p-value=0.07
+#use function from tempo_stats script
+intro_res = extract_coxme_table(intro.lme)
+
+tibble::tibble(response = "intro_length(num)", beta_sf = intro_res$beta[2], p_sf = intro_res$p[2],
+               beta_logAge = intro_res$beta[3], p_logAge = intro_res$p[3], 
+               #report chi square tests
+               pedigree = 1-pchisq(2*(intro.lme$loglik - intro.lme2$loglik),1), 
+               clutch = 1-pchisq(2*(intro.lme$loglik - intro.lme3$loglik),1), 
+               neither = 1-pchisq(2*(intro.lme$loglik - intro.lme4$loglik),2),
+               full_loglik = intro.lme$loglik, no.ped_loglike = intro.lme2$loglik, no.clutch_loglike = intro.lme3$loglik, neither_loglike = intro.lme4$loglik)
+
+
 
 #plot relationship
 

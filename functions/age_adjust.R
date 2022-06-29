@@ -80,9 +80,13 @@ age_adjust <- function(model, tol, data, kin){
                      data = adj_data)
   
   new_beta = new_model$coefficients$fixed[3]
-  
+  #new_beta = (new_model$coefficients$fixed[3] + beta)/2
+
   #iterate until the betas converge
   while( abs(new_beta - beta) > tol){
+    print(paste("beta", beta))
+    print(paste("new_beta", new_beta))
+    
     #update beta
     beta = new_beta
     #age adjusted phenotype
@@ -95,6 +99,7 @@ age_adjust <- function(model, tol, data, kin){
                        varlist = 2*kin.adj,
                        data = adj_data)
     new_beta = new_model$coefficients$fixed[3]
+    #new_beta = (new_model$coefficients$fixed[3] + beta)/2
   }
   
   #return final model
