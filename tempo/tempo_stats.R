@@ -2,7 +2,8 @@
 
 #load packages
 library(birdsong.tools)
-pacman::p_load(coxme, magrittr)
+library(coxme)
+library(magrittr)
 
 #load functions
 source("~/Documents/GitHub/JavaSparrow_Birdsong/functions/age_adjust.R")
@@ -27,7 +28,7 @@ null.kin = readRDS(file = "~/Documents/GitHub/JavaSparrow_Birdsong/data/null.kin
 
 #input: unit table, meta data table
 #output: dataframe with bird ID, son's statistics, sf statistics, son's BD, son's DOR, son's Age_Rec, Clutch, SF ID, Sf DOR, sf Age_rec
-compute_res <- function(unit_table, meta.data){
+compute_res <- function(unit_table, meta.data, denom_var = T, min= 2){
   
   #compute tempo----
   tempo_data = get_tempo(unit_table) %>% 
@@ -128,12 +129,16 @@ compute_res <- function(unit_table, meta.data){
   gap_score_df = do.call(rbind, gap_scores)
   
   #gap variability score
+  
+  #name change
+  gap_data = gap_data %>%
+    dplyr::mutate(Bird.ID = ID)
+  
   var_scores = list()
   for(i in 1:length(bird_ID)){
     tar = bird_ID[i]
-    ind_data = gap_data %>%
-      dplyr::filter(ID == tar)
-    var_scores[[i]] <- tibble::tibble(Bird.ID = tar, var_score = gap_var_score(ind_data))
+    var_scores[[i]] <- tibble::tibble(Bird.ID = tar, var_score = gap_var_score(gap_data, bird = tar,denom_var, min))
+    print(tar)
   }
   
   var_scores = do.call(rbind, var_scores)
@@ -256,7 +261,8 @@ fit_birdmodel <- function(stat_table, kin.trim , null.kin , model_output = T){
 
 
 #compute all temporal stats----
-bird_stats = compute_res(unit_table = full_ut, meta.data = meta.data)
+bird_stats = compute_res(unit_table = full_ut, meta.data = meta.data, denom_var = T, min = 5)
+saveRDS(bird_stats, file = "./tempo/data/bird_stats.rds")
 #compute models
 fullsong_models = lapply(bird_stats, FUN =  fit_birdmodel, kin.trim = kin.trim , null.kin = null.kin)
 #compute result table
@@ -264,7 +270,9 @@ fullsong_tab = lapply(bird_stats, FUN =  fit_birdmodel, kin.trim = kin.trim , nu
 fullsong_tab = do.call(rbind, fullsong_tab)
 
 #do the same for the nointro table----
-bird_stats2 = compute_res(unit_table = nointro_ut, meta.data = meta.data)
+bird_stats2 = compute_res(unit_table = nointro_ut, meta.data = meta.data, denom_var = T, min = 5)
+saveRDS(bird_stats, file = "./tempo/data/bird_stats2.rds")
+
 #compute models
 nointros_models = lapply(bird_stats2, FUN =  fit_birdmodel, kin.trim = kin.trim , null.kin = null.kin)
 #compute result table
