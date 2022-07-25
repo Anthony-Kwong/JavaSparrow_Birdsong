@@ -4,6 +4,7 @@
 library(birdsong.tools)
 library(coxme)
 library(magrittr)
+setwd("~/Documents/GitHub/JavaSparrow_Birdsong/")
 
 #load functions
 source("~/Documents/GitHub/JavaSparrow_Birdsong/functions/age_adjust.R")
@@ -15,7 +16,8 @@ full_ut=read.csv("~/Dropbox (The University of Manchester)/Java_Sparrow_Temporal
 #unit table without intros
 nointro_ut <- read.csv("~/Dropbox (The University of Manchester)/Java_Sparrow_Temporal/UnitTable_nointro.csv")
 
-#import metadata on individual birds
+#import metadata on individual birds, this table is produced by putting through the Lewisetal2021_metadata.csv into the 
+#Frontiers code which imputes the missing birth dates. 
 meta.data=read.csv("~/Documents/GitHub/JavaSparrow_Birdsong/data/meta_data.csv")
 meta.data$X1 <- NULL
 meta.data=meta.data[order(meta.data$Bird.ID),]
@@ -101,7 +103,7 @@ compute_res <- function(unit_table, meta.data, denom_var = T, min= 2){
   std_gap= do.call(rbind,std_gap)
   
   #gap score ----
-  #compute vector of mean gaps for each transitition for the whole population
+  #compute vector of mean gaps for each transition for the whole population
   trans = unique(gap_data$transitions)
   
   pop_means = list()
@@ -151,7 +153,7 @@ compute_res <- function(unit_table, meta.data, denom_var = T, min= 2){
   # 
   
   #add metadata (age, sf ID, sf stat, clutch)
-  stats_data = c(list(gap_score_df, std_gap, var_scores),avg_stats) 
+  stats_data = c(list(gap_score_df, std_gap, var_scores), avg_stats) 
   
   fin_stat = lapply(stats_data, function(tab){
     #need 'the original birdsong data set to fit the model with Bird.ID, phenotype, social father's phenotype, Birth.Date, sf_Age_Rec, Age_Rec and Clutch(in that order). 
@@ -241,7 +243,7 @@ fit_birdmodel <- function(stat_table, kin.trim , null.kin , model_output = T){
     beta_age = mod_tab$beta[3]
     p_age = mod_tab$p[3]
     
-    #test sig. of genetics using chi square log likelihood ratio test. The test statistic is 2*difference in the loglikelihood. Distribution is approximately chi square with df being df(full model)-df(reduced model) 
+    #test sig. of genetics using chi square  likelihood ratio test. The test statistic is 2*difference in the loglikelihood. Distribution is approximately chi square with df being df(full model)-df(reduced model) 
     chi_g = 1-pchisq(2*(AM1$loglik - AM2$loglik),1)
     #test sif. of clutch
     chi_c = 1-pchisq(2*(AM1$loglik - AM3$loglik),1)
@@ -262,7 +264,8 @@ fit_birdmodel <- function(stat_table, kin.trim , null.kin , model_output = T){
 
 #compute all temporal stats----
 bird_stats = compute_res(unit_table = full_ut, meta.data = meta.data, denom_var = T, min = 5)
-saveRDS(bird_stats, file = "./tempo/data/bird_stats.rds")
+saveRDS(bird_stats, file = "./tempo/data/full_bird_stats.rds")
+
 #compute models
 fullsong_models = lapply(bird_stats, FUN =  fit_birdmodel, kin.trim = kin.trim , null.kin = null.kin)
 #compute result table
@@ -271,7 +274,7 @@ fullsong_tab = do.call(rbind, fullsong_tab)
 
 #do the same for the nointro table----
 bird_stats2 = compute_res(unit_table = nointro_ut, meta.data = meta.data, denom_var = T, min = 5)
-saveRDS(bird_stats, file = "./tempo/data/bird_stats2.rds")
+saveRDS(bird_stats2, file = "./tempo/data/nointro_bird_stats.rds")
 
 #compute models
 nointros_models = lapply(bird_stats2, FUN =  fit_birdmodel, kin.trim = kin.trim , null.kin = null.kin)
